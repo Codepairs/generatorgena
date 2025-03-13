@@ -21,11 +21,11 @@ class Image(models.Model):
 class Usage_history(models.Model):
     operationID = models.AutoField(primary_key=True)
     userID = models.ForeignKey(User, on_delete=models.CASCADE)
-    imageID = models.ForeignKey(Image, on_delete=models.CASCADE)
+    imageID = models.ForeignKey(Image, on_delete=models.SET_NULL, null=True)
     prompt = models.TextField()
     createdAt = models.DateTimeField(auto_now_add=True)
     updatedAt = models.DateTimeField(auto_now=True)
-    status = models.CharField(max_length=50)
+    status = models.CharField(max_length=20)
 
     def __str__(self):
         return f"Operation {self.operationID} - User {self.userID} - Image {self.imageID}"
