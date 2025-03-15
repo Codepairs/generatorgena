@@ -6,8 +6,8 @@ class User(models.Model):
     password = models.CharField(max_length=128)
     userName = models.CharField(max_length=50)
 
-    def __str__(self):
-        return self.userName
+#    def __str__(self):
+#        return self.userName
 
 class Image(models.Model):
     imageID = models.AutoField(primary_key=True)
@@ -15,8 +15,8 @@ class Image(models.Model):
     createdAt = models.DateTimeField(auto_now_add=True)
     rating = models.FloatField(default=0.0)
 
-    def __str__(self):
-        return f"Image {self.imageID} - {self.link_to_image}"
+#    def __str__(self):
+#        return f"Image {self.imageID} - {self.link_to_image}"
 
 class Usage_history(models.Model):
     operationID = models.AutoField(primary_key=True)
@@ -27,6 +27,6 @@ class Usage_history(models.Model):
     updatedAt = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=20)
 
-    def __str__(self):
-        return f"Operation {self.operationID} - User {self.userID} - Image {self.imageID}"
+#   def __str__(self):
+#       return f"Operation {self.operationID} - User {self.userID} - Image {self.imageID}"
 
