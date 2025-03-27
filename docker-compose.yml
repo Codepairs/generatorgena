@@ -1,0 +1,37 @@
+version: "3.9"  # Добавьте версию Docker Compose
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DJANGO_DB_HOST: db
+      DJANGO_DB_NAME: postgres_tsp_db
+      DJANGO_DB_USER: postgres
+      DJANGO_DB_PASS: postgres
+      DJANGO_DB_PORT: "5432"
+      DJANGO_DEBUG: "False"
+    depends_on:
+      db:
+        condition: service_healthy  # <-- Добавлено условие зависимости
+    ports:
+      - "8000:8000"
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: postgres_tsp_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:  # <-- Добавлен healthcheck
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres_tsp_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db_data: # Используйте именованные тома
