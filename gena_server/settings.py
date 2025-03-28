@@ -11,16 +11,21 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from dotenv import load_dotenv
 import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+load_dotenv(BASE_DIR / ".env")  # Загружаем переменные окружения
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-b57j61-v5r5s6y3%zxfcjn+n=d+)6=^f@im3!kde(x^xydk!l0"
+
+# KEYS FOR KANDINSKY
+KANDINSKY_SECRET_KEY = os.getenv("KANDINSKY_SECRET_KEY")
+KANDINSKY_API_KEY = os.getenv("KANDINSKY_API_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
