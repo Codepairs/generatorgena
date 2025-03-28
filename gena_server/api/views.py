@@ -6,9 +6,15 @@ from rest_framework.views import APIView
 
 from gena_database_app.models import User, UsageHistory, ImageModel
 from .serializers import UserSerializer, UsageHistorySerializer, ImageModelSerializer
+from django.conf import settings
 import logging
+import requests
+import json
+import time
 
 logger = logging.getLogger(__name__)
+
+
 
 class RegisterUserView(APIView):
     def post(self, request):
@@ -73,6 +79,62 @@ class GetRequestView(APIView):
 
 class CreateUsageView(CreateAPIView):
     serializer_class = UsageHistorySerializer
+
+###############
+# Kandinsky api
+
+class GetModelStatus(APIView):
+    def get(self):
+        AUTH_HEADERS = {
+            'X-Key': f'Key {settings.KANDINSKY_API_KEY}',
+            'X-Secret': f'Secret {settings.KANDINSKY_SECRET_KEY}',
+        }
+        response = requests.get('https://api-key.fusionbrain.ai/' + 'key/api/v1/pipelines', headers=AUTH_HEADERS)
+        data = response.json()
+        pipeline_id = data[0]['id']
+        return pipeline_id
+
+class CreateImageGenerationRequest(APIView):
+    def post(self, prompt, pipeline, images=1, width=1024, height=1024):
+        AUTH_HEADERS = {
+            'X-Key': f'Key {settings.KANDINSKY_API_KEY}',
+            'X-Secret': f'Secret {settings.KANDINSKY_SECRET_KEY}',
+        }
+        params = {
+            "type": "GENERATE",
+            "numImages": images,
+            "width": width,
+            "height": height,
+            "generateParams": {
+                "query": "{prompt}"
+            }
+        }
+
+        data = {
+            'pipeline_id': (None, pipeline),
+            'params': (None, json.dumps(params), 'application/json')
+        }
+        response = requests.post('https://api-key.fusionbrain.ai/' + 'key/api/v1/pipeline/run', headers=AUTH_HEADERS, files=data)
+        data = response.json()
+        return data['uuid']
+    
+class GetGeneratedImage(APIView):
+    def get(self, request_id, attempts=10, delay=10):
+        AUTH_HEADERS = {
+            'X-Key': f'Key {settings.KANDINSKY_API_KEY}',
+            'X-Secret': f'Secret {settings.KANDINSKY_SECRET_KEY}',
+        }
+        while attempts > 0:
+            response = requests.get('https://api-key.fusionbrain.ai/' + 'key/api/v1/pipeline/status/' + request_id, headers=AUTH_HEADERS)
+            data = response.json()
+            if data['status'] == 'DONE':
+                return data['files']
+
+            attempts -= 1
+            time.sleep(delay)
+
+###############
+
 
 class GetImageView(APIView):
     def get(self, request, image_id):
