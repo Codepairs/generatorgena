@@ -19,9 +19,9 @@ class Command(BaseCommand):
         for i in range(5):
             user = User.objects.create(
                 email=fake.ascii_free_email(),
-                password=fake.password(length=10),
                 userName=fake.name()
             )
+            user.set_password(fake.password(length=10))
             users.append(user)
             self.stdout.write(f'    Создан пользователь c email: {user.email}, паролем: {user.password}, именем: {user.userName}')
 
@@ -30,7 +30,7 @@ class Command(BaseCommand):
         images = []
         
         for i in range(10):
-            image = Image.objects.create(
+            image = ImageModel.objects.create(
                 link_to_image=fake.uri(),
                 rating=random.randint(1, 5)
             )
@@ -60,7 +60,7 @@ class Command(BaseCommand):
             status = random.choice(statuses)
 
             # Создаем запись истории
-            usage = Usage_history.objects.create(
+            usage = UsageHistory.objects.create(
                 userID=user,
                 imageID=image,
                 prompt=prompt,
@@ -69,4 +69,4 @@ class Command(BaseCommand):
             self.stdout.write(f'    Создана запись истории: пользователь - {user.userID}, изображение - {image.imageID}, статус - {status}')
 
         self.stdout.write(self.style.SUCCESS('База данных успешно заполнена!'))
-        self.stdout.write(f'Добавлено: {len(users)} пользователей, {len(images)} изображений, {Usage_history.objects.count()} записей истории')
+        self.stdout.write(f'Добавлено: {len(users)} пользователей, {len(images)} изображений, {UsageHistory.objects.count()} записей истории')
