@@ -20,7 +20,7 @@ class ImageModel(models.Model):
 
 class UsageHistory(models.Model):
     operationID = models.AutoField(primary_key=True)
-    pipeline = models.TextField() # for kandinsky
+    uuID = models.TextField() # for kandinsky
     userID = models.ForeignKey(User, on_delete=models.CASCADE)
     imageID = models.ForeignKey(ImageModel, on_delete=models.SET_NULL, null=True)
     prompt = models.TextField()

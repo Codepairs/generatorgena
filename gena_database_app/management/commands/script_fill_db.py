@@ -65,7 +65,7 @@ class Command(BaseCommand):
                 imageID=image,
                 prompt=prompt,
                 status=status,
-                pipeline='test'
+                uuID='test'
             )
             self.stdout.write(f'    Создана запись истории: пользователь - {user.userID}, изображение - {image.imageID}, статус - {status}')
 
