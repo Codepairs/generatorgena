@@ -1,4 +1,3 @@
-version: "3.9"  # Добавьте версию Docker Compose
 services:
   app:
     build:
@@ -13,7 +12,7 @@ services:
       DJANGO_DEBUG: "False"
     depends_on:
       db:
-        condition: service_healthy  # <-- Добавлено условие зависимости
+        condition: service_healthy
     ports:
       - "8000:8000"
 
@@ -27,11 +26,11 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
-    healthcheck:  # <-- Добавлен healthcheck
+    healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d postgres_tsp_db"]
       interval: 10s
       timeout: 5s
       retries: 5
 
 volumes:
-  db_data: # Используйте именованные тома
+  db_data:
