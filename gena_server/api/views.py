@@ -21,10 +21,17 @@ logger = logging.getLogger(__name__)
 class RegisterUserView(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # Логирование ошибки
+            logger.error(f"Error registering user: {str(e)}")
+            return Response({"error": "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class GetUserView(APIView):
     def get(self, request, user_id):
@@ -85,16 +92,27 @@ class CreateUsageView(CreateAPIView):
 ###############
 # Kandinsky api
 
+from rest_framework.response import Response
+from rest_framework import status
+
 class GetModelStatus(APIView):
     def get(self):
-        AUTH_HEADERS = {
-            'X-Key': f'Key {settings.KANDINSKY_API_KEY}',
-            'X-Secret': f'Secret {settings.KANDINSKY_SECRET_KEY}',
-        }
-        response = requests.get('https://api-key.fusionbrain.ai/' + 'key/api/v1/pipelines', headers=AUTH_HEADERS)
-        data = response.json()
-        pipeline_id = data[0]['id']
-        return pipeline_id
+        try:
+            AUTH_HEADERS = {
+                'X-Key': f'key 06A3A1C1C6B7E26C84233547A56AA0A3',
+                'X-Secret': f'secret D3817014623AE5637C5BA5C0300E08DB',
+            }
+            response = requests.get('https://api-key.fusionbrain.ai/' + 'key/api/v1/pipelines', headers=AUTH_HEADERS)
+            response.raise_for_status()  # Вызывает исключение, если статус ответа не 200
+            data = response.json()
+            pipeline_id = data[0]['id']
+            return Response({'pipeline_id': pipeline_id})
+        except requests.exceptions.RequestException as e:
+            return Response({'error': 'Ошибка запроса'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except KeyError:
+            return Response({'error': 'Нет ключа "id" в данных'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CreateImageGenerationRequest(APIView):
     def post(self, user_id, prompt, pipeline, images=1, width=1024, height=1024):
@@ -160,6 +178,7 @@ class GetGeneratedImage(APIView):
                 image_info = {
                     'link_to_image': filepath
                 }
+                history.imageID = filepath
                 serializer = ImageModelSerializer(image_info)
                 if serializer.is_valid():
                     serializer.save()

@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-b57j61-v5r5s6y3%zxfcjn+n=d+)6=^f@im3!kde(x^xydk!l0
 # KEYS FOR KANDINSKY
 KANDINSKY_SECRET_KEY = os.getenv("KANDINSKY_SECRET_KEY")
 KANDINSKY_API_KEY = os.getenv("KANDINSKY_API_KEY")
-
+load_dotenv(BASE_DIR.parent / ".env")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
