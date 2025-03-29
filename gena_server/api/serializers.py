@@ -48,14 +48,14 @@ class ImageModelSerializer(serializers.ModelSerializer):
 class UsageHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = UsageHistory
-        fields = ['operationID', 'uuID', 'userID', 'imageID', 'prompt', 'createdAt', 'updatedAt', 'status']
+        fields = ['operationID', 'modelPromptID', 'userID', 'imageID', 'prompt', 'createdAt', 'updatedAt', 'status']
 
     def create(self, validated_data):
         usage = UsageHistory.objects.create(
             userID=validated_data.get('userID', ''),
-            uuID=validated_data.get('uuID', ''),
+            modelPromptID=validated_data.get('modelPromptID', ''),
             prompt=validated_data.get('prompt', ''),
-            status='created',
+            status=validated_data.get('status', 'created'),
             imageID=None
         )
         return usage

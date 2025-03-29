@@ -11,7 +11,7 @@ class User(models.Model):
 
 class ImageModel(models.Model):
     imageID = models.AutoField(primary_key=True)
-    link_to_image = models.URLField()
+    link_to_image = models.TextField()
     createdAt = models.DateTimeField(auto_now_add=True)
     rating = models.FloatField(default=0.0)
 
@@ -20,7 +20,7 @@ class ImageModel(models.Model):
 
 class UsageHistory(models.Model):
     operationID = models.AutoField(primary_key=True)
-    uuID = models.TextField() # for kandinsky
+    modelPromptID = models.TextField() # for kandinsky
     userID = models.ForeignKey(User, on_delete=models.CASCADE)
     imageID = models.ForeignKey(ImageModel, on_delete=models.SET_NULL, null=True)
     prompt = models.TextField()

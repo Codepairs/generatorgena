@@ -13,7 +13,7 @@ import json
 import time
 import base64
 import os
-import uuid as uid
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -85,9 +85,11 @@ class GetRequestView(APIView):
         except User.DoesNotExist:
             return Response({"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
-
+###
 class CreateUsageView(CreateAPIView):
     serializer_class = UsageHistorySerializer
+###
+
 
 ###############
 # Kandinsky api
@@ -96,11 +98,13 @@ from rest_framework.response import Response
 from rest_framework import status
 
 class GetModelStatus(APIView):
-    def get(self):
+    def get(self, request):
         try:
+            key = '06A3A1C1C6B7E26C84233547A56AA0A3'
+            secret = 'D3817014623AE5637C5BA5C0300E08DB'
             AUTH_HEADERS = {
-                'X-Key': f'key 06A3A1C1C6B7E26C84233547A56AA0A3',
-                'X-Secret': f'secret D3817014623AE5637C5BA5C0300E08DB',
+                'X-Key': f'Key {key}',
+                'X-Secret': f'Secret {secret}'
             }
             response = requests.get('https://api-key.fusionbrain.ai/' + 'key/api/v1/pipelines', headers=AUTH_HEADERS)
             response.raise_for_status()  # Вызывает исключение, если статус ответа не 200
@@ -115,78 +119,121 @@ class GetModelStatus(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CreateImageGenerationRequest(APIView):
-    def post(self, user_id, prompt, pipeline, images=1, width=1024, height=1024):
-        
-        AUTH_HEADERS = {
-            'X-Key': f'Key {settings.KANDINSKY_API_KEY}',
-            'X-Secret': f'Secret {settings.KANDINSKY_SECRET_KEY}',
-        }
-        params = {
-            "type": "GENERATE",
-            "numImages": images,
-            "width": width,
-            "height": height,
-            "generateParams": {
-                "query": "{prompt}"
-            }
-        }
+    def post(self, request):
+        try:
+            data = request.data  # Получаем JSON-данные из тела запроса
+            user_id = data.get("user_id")
+            prompt = data.get("prompt")
+            pipeline = data.get("pipeline")
+            images = data.get("images", 1)
+            width = data.get("width", 1024)
+            height = data.get("height", 1024)
 
-        data = {
-            'pipeline_id': (None, pipeline),
-            'params': (None, json.dumps(params), 'application/json')
-        }
-        response = requests.post('https://api-key.fusionbrain.ai/' + 'key/api/v1/pipeline/run', headers=AUTH_HEADERS, files=data)
-        data = response.json()
+            if not user_id or not prompt or not pipeline:
+                return Response({"error": "Не все обязательные параметры переданы"},
+                                status=status.HTTP_400_BAD_REQUEST)
         
-        operation_info = {
-            'userID': user_id,
-            'uuID': data['uuID'],
-            'prompt': prompt
-        }
-        serializer = UsageHistorySerializer(operation_info)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            key = '06A3A1C1C6B7E26C84233547A56AA0A3'
+            secret = 'D3817014623AE5637C5BA5C0300E08DB'
+            AUTH_HEADERS = {
+                'X-Key': f'Key {key}',
+                'X-Secret': f'Secret {secret}'
+            }
+            params = {
+                "type": "GENERATE",
+                "numImages": images,
+                "width": width,
+                "height": height,
+                "generateParams": {
+                    "query": "{prompt}"
+                }
+            }
+
+            data = {
+                'pipeline_id': (None, pipeline),
+                'params': (None, json.dumps(params), 'application/json')
+            }
+            response = requests.post('https://api-key.fusionbrain.ai/' + 'key/api/v1/pipeline/run', headers=AUTH_HEADERS, files=data)
+            data = response.json()
+
+            if 'uuid' not in data:
+                return Response({'error': 'Ответ API не содержит uuID', 'api_response': data},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            operation_info = {
+                'userID': user_id,
+                'modelPromptID': data['uuid'],
+                'prompt': prompt,
+                'status': 'created'
+            }
+            serializer = UsageHistorySerializer(data=operation_info)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except requests.exceptions.RequestException:
+            return Response({'error': 'Ошибка при запросе к API'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 class GetGeneratedImage(APIView):
-    def get(self, operation_id, attempts=10, delay=10):
-        AUTH_HEADERS = {
-            'X-Key': f'Key {settings.KANDINSKY_API_KEY}',
-            'X-Secret': f'Secret {settings.KANDINSKY_SECRET_KEY}',
-        }
-        history = UsageHistory.objects.filter(operationID=operation_id)
-        request_id = history.uuID
-        while attempts > 0:
-            response = requests.get('https://api-key.fusionbrain.ai/' + 'key/api/v1/pipeline/status/' + request_id, headers=AUTH_HEADERS)
-            data = response.json()
-            if data['status'] == 'DONE':
-                
-                # Сохранение строки base64 в файл
-                binary_img = base64.b64decode(data['result']['files'][0])
-                folder = './images'
-                os.makedirs(folder, exist_ok=True)
+    def get(self, request):
+        try:
+            operation_id = request.query_params.get("operation_id")
+            attempts = int(request.query_params.get("attempts", 10))
+            delay = int(request.query_params.get("delay", 10))
 
-                # Генерируем уникальное имя файла
-                filename = f"{uid.uuid4().hex}.jpg"  # Уникальный идентификатор
-                filepath = os.path.join(folder, filename)
+            if not operation_id:
+                return Response({"error": "Параметр 'operation_id' обязателен"}, status=status.HTTP_400_BAD_REQUEST)
+            key = '06A3A1C1C6B7E26C84233547A56AA0A3'
+            secret = 'D3817014623AE5637C5BA5C0300E08DB'
+            AUTH_HEADERS = {
+                'X-Key': f'Key {key}',
+                'X-Secret': f'Secret {secret}'
+            }
+            history = UsageHistory.objects.filter(operationID=operation_id).first()
+            request_id = history.modelPromptID
+            while attempts > 0:
+                response = requests.get('https://api-key.fusionbrain.ai/' + 'key/api/v1/pipeline/status/' + request_id, headers=AUTH_HEADERS)
+                data = response.json()
+                if data['status'] == 'DONE':
+                    
+                    if 'result' not in data:
+                        return Response({'error': 'Ответ API не содержит result', 'api_response': data},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    
+                    # Сохранение строки base64 в файл
+                    try:
+                        binary_img = base64.b64decode(data['result']['files'][0])
+                    except (KeyError, IndexError, TypeError):
+                        return Response({"error": "Ошибка при декодировании изображения"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    
+                    folder = './images'
+                    os.makedirs(folder, exist_ok=True)
 
-                # Сохраняем бинарные данные в новый файл JPG
-                with open(filepath, 'wb') as new_img:
-                    new_img.write(binary_img)
-                
-                image_info = {
-                    'link_to_image': filepath
-                }
-                history.imageID = filepath
-                serializer = ImageModelSerializer(image_info)
-                if serializer.is_valid():
-                    serializer.save()
-                    return Response(serializer.data, status=status.HTTP_201_CREATED)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    # Генерируем уникальное имя файла
+                    filename = f"{uuid.uuid4().hex}.jpg"  # Уникальный идентификатор
+                    filepath = os.path.join(folder, filename)
 
-            attempts -= 1
-            time.sleep(delay)
+                    # Сохраняем бинарные данные в новый файл JPG
+                    with open(filepath, 'wb') as new_img:
+                        new_img.write(binary_img)
+                    
+                    image_info = {
+                        'link_to_image': filepath
+                    }
+                    #history.imageID = filepath
+                    serializer = ImageModelSerializer(data=image_info)
+                    if serializer.is_valid():
+                        serializer.save()
+                        return Response(serializer.data, status=status.HTTP_201_CREATED)
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+                attempts -= 1
+                time.sleep(delay)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 ###############
 
