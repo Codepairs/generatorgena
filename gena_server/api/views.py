@@ -204,33 +204,15 @@ class GetGeneratedImage(APIView):
                         return Response({'error': 'Ответ API не содержит результат', 'api_response': data},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                     
-                    # Сохранение строки base64 в файл
-                    #try:
-                    #    binary_img = base64.b64decode(data['result']['files'][0])
-                    #except (KeyError, IndexError, TypeError):
-                    #    return Response({"error": "Ошибка при декодировании изображения"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-                    
-                    #folder = './images'
-                    #os.makedirs(folder, exist_ok=True)
-
-                    # Генерируем уникальное имя файла
-                    #filename = f"{uuid.uuid4().hex}.jpg"  # Уникальный идентификатор
-                    #filepath = os.path.join(folder, filename)
-
-                    # Сохраняем бинарные данные в новый файл JPG
-                    #with open(filepath, 'wb') as new_img:
-                    #    new_img.write(binary_img)
-                    
                     image_info = {
                         'image_base64': data['result']['files'][0]
                     }
 
-                    #history.imageID = filepath
                     serializer = ImageModelSerializer(data=image_info)
                     if serializer.is_valid():
                         instance = serializer.save()
-                        history.imageID = instance  # Правильный доступ к `imageID`
-                        history.save()  # Сохраняем обновлённый history
+                        history.imageID = instance
+                        history.save()
                         return Response(serializer.data, status=status.HTTP_201_CREATED)
                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
