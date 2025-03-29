@@ -11,12 +11,12 @@ class User(models.Model):
 
 class ImageModel(models.Model):
     imageID = models.AutoField(primary_key=True)
-    link_to_image = models.TextField()
+    image_base64 = models.TextField()
     createdAt = models.DateTimeField(auto_now_add=True)
     rating = models.FloatField(default=0.0)
 
     def __str__(self):
-        return f"Image {self.imageID} - {self.link_to_image}"
+        return f"Image {self.imageID} - {self.image_base64}"
 
 class UsageHistory(models.Model):
     operationID = models.AutoField(primary_key=True)

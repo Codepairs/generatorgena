@@ -21,7 +21,7 @@ class UserSerializer(serializers.ModelSerializer):
         instance.email = validated_data.get('email', instance.email)
         instance.userName = validated_data.get('userName', instance.userName)
         if 'password' in validated_data:
-            instance.set_password(validated_data['password'])
+            instance.password = (validated_data['password'])
         instance.save()
         return instance
 
@@ -29,17 +29,17 @@ class UserSerializer(serializers.ModelSerializer):
 class ImageModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImageModel
-        fields = ['imageID', 'link_to_image', 'createdAt', 'rating']
+        fields = ['imageID', 'image_base64', 'createdAt', 'rating']
 
     def create(self, validated_data):
         image = ImageModel.objects.create(
-            link_to_image=validated_data.get('link_to_image', ''),
+            image_base64=validated_data.get('image_base64', ''),
             rating=validated_data.get('rating', 0.0)
         )
         return image
 
     def update(self, instance, validated_data):
-        instance.link_to_image = validated_data.get('link_to_image', instance.link_to_image)
+        instance.image_base64 = validated_data.get('image_base64', instance.image_base64)
         instance.rating = validated_data.get('rating', instance.rating)
         instance.save()
         return instance

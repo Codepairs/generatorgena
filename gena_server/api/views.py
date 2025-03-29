@@ -28,8 +28,7 @@ class RegisterUserView(APIView):
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # Логирование ошибки
-            logger.error(f"Error registering user: {str(e)}")
+            logger.error(f"Ошибка регистрации пользователя: {str(e)}")
             return Response({"error": "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -40,7 +39,7 @@ class GetUserView(APIView):
             serializer = UserSerializer(user)  # many=False, так как получаем одного пользователя
             return Response(serializer.data, status=status.HTTP_200_OK)
         except User.DoesNotExist:
-            return Response({"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
 
 class UpdateUserView(APIView):
     def put(self, request, user_id):
@@ -73,7 +72,7 @@ class GetUserHistoryView(APIView):
             serializer = UsageHistorySerializer(history, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except User.DoesNotExist:
-            return Response({"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
 
 class GetRequestView(APIView):
     def get(self, request, user_id, operation_id):
@@ -83,7 +82,7 @@ class GetRequestView(APIView):
             serializer = UsageHistorySerializer(history, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except User.DoesNotExist:
-            return Response({"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
 
 ###
 class CreateUsageView(CreateAPIView):
@@ -100,12 +99,11 @@ from rest_framework import status
 class GetModelStatus(APIView):
     def get(self, request):
         try:
-            key = '06A3A1C1C6B7E26C84233547A56AA0A3'
-            secret = 'D3817014623AE5637C5BA5C0300E08DB'
             AUTH_HEADERS = {
-                'X-Key': f'Key {key}',
-                'X-Secret': f'Secret {secret}'
+            'X-Key': f'Key {settings.KANDINSKY_API_KEY}',
+            'X-Secret': f'Secret {settings.KANDINSKY_SECRET_KEY}',
             }
+
             response = requests.get('https://api-key.fusionbrain.ai/' + 'key/api/v1/pipelines', headers=AUTH_HEADERS)
             response.raise_for_status()  # Вызывает исключение, если статус ответа не 200
             data = response.json()
@@ -133,12 +131,11 @@ class CreateImageGenerationRequest(APIView):
                 return Response({"error": "Не все обязательные параметры переданы"},
                                 status=status.HTTP_400_BAD_REQUEST)
         
-            key = '06A3A1C1C6B7E26C84233547A56AA0A3'
-            secret = 'D3817014623AE5637C5BA5C0300E08DB'
             AUTH_HEADERS = {
-                'X-Key': f'Key {key}',
-                'X-Secret': f'Secret {secret}'
+            'X-Key': f'Key {settings.KANDINSKY_API_KEY}',
+            'X-Secret': f'Secret {settings.KANDINSKY_SECRET_KEY}',
             }
+
             params = {
                 "type": "GENERATE",
                 "numImages": images,
@@ -166,6 +163,7 @@ class CreateImageGenerationRequest(APIView):
                 'prompt': prompt,
                 'status': 'created'
             }
+
             serializer = UsageHistorySerializer(data=operation_info)
             if serializer.is_valid():
                 serializer.save()
@@ -186,13 +184,16 @@ class GetGeneratedImage(APIView):
 
             if not operation_id:
                 return Response({"error": "Параметр 'operation_id' обязателен"}, status=status.HTTP_400_BAD_REQUEST)
-            key = '06A3A1C1C6B7E26C84233547A56AA0A3'
-            secret = 'D3817014623AE5637C5BA5C0300E08DB'
+            
             AUTH_HEADERS = {
-                'X-Key': f'Key {key}',
-                'X-Secret': f'Secret {secret}'
+            'X-Key': f'Key {settings.KANDINSKY_API_KEY}',
+            'X-Secret': f'Secret {settings.KANDINSKY_SECRET_KEY}',
             }
+
             history = UsageHistory.objects.filter(operationID=operation_id).first()
+            if not history:
+                return Response({"error": "История с таким operation_id не найдена"}, status=status.HTTP_404_NOT_FOUND)
+            
             request_id = history.modelPromptID
             while attempts > 0:
                 response = requests.get('https://api-key.fusionbrain.ai/' + 'key/api/v1/pipeline/status/' + request_id, headers=AUTH_HEADERS)
@@ -200,33 +201,36 @@ class GetGeneratedImage(APIView):
                 if data['status'] == 'DONE':
                     
                     if 'result' not in data:
-                        return Response({'error': 'Ответ API не содержит result', 'api_response': data},
+                        return Response({'error': 'Ответ API не содержит результат', 'api_response': data},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                     
                     # Сохранение строки base64 в файл
-                    try:
-                        binary_img = base64.b64decode(data['result']['files'][0])
-                    except (KeyError, IndexError, TypeError):
-                        return Response({"error": "Ошибка при декодировании изображения"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    #try:
+                    #    binary_img = base64.b64decode(data['result']['files'][0])
+                    #except (KeyError, IndexError, TypeError):
+                    #    return Response({"error": "Ошибка при декодировании изображения"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                     
-                    folder = './images'
-                    os.makedirs(folder, exist_ok=True)
+                    #folder = './images'
+                    #os.makedirs(folder, exist_ok=True)
 
                     # Генерируем уникальное имя файла
-                    filename = f"{uuid.uuid4().hex}.jpg"  # Уникальный идентификатор
-                    filepath = os.path.join(folder, filename)
+                    #filename = f"{uuid.uuid4().hex}.jpg"  # Уникальный идентификатор
+                    #filepath = os.path.join(folder, filename)
 
                     # Сохраняем бинарные данные в новый файл JPG
-                    with open(filepath, 'wb') as new_img:
-                        new_img.write(binary_img)
+                    #with open(filepath, 'wb') as new_img:
+                    #    new_img.write(binary_img)
                     
                     image_info = {
-                        'link_to_image': filepath
+                        'image_base64': data['result']['files'][0]
                     }
+
                     #history.imageID = filepath
                     serializer = ImageModelSerializer(data=image_info)
                     if serializer.is_valid():
-                        serializer.save()
+                        instance = serializer.save()
+                        history.imageID = instance  # Правильный доступ к `imageID`
+                        history.save()  # Сохраняем обновлённый history
                         return Response(serializer.data, status=status.HTTP_201_CREATED)
                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -245,4 +249,4 @@ class GetImageView(APIView):
             serializer = ImageModelSerializer(image)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except ImageModel.DoesNotExist:
-            return Response({"message": "Image not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "Изображение не найдено"}, status=status.HTTP_404_NOT_FOUND)
