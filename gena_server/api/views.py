@@ -13,9 +13,6 @@ import logging
 import requests
 import json
 import time
-import base64
-import os
-import uuid
 
 logger = logging.getLogger(__name__)
 
