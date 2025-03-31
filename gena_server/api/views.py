@@ -14,10 +14,18 @@ import requests
 import json
 import time
 
+import base64
+from django.http import HttpResponse
+from io import BytesIO
+from PIL import Image
+
+
 logger = logging.getLogger(__name__)
 
 
 class RegisterUserView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         try:
@@ -32,6 +40,7 @@ class RegisterUserView(APIView):
 
 
 class GetUserView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request, user_id):
         try:
             user = User.objects.get(userID=user_id)
@@ -41,6 +50,7 @@ class GetUserView(APIView):
             return Response({"message": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
 
 class UpdateUserView(APIView):
+    permission_classes = [IsAuthenticated]
     def put(self, request, user_id):
         try:
             user = User.objects.get(userID=int(user_id))
@@ -54,6 +64,7 @@ class UpdateUserView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DeleteUserView(APIView):
+    permission_classes = [IsAuthenticated]
     def delete(self, request, user_id):
         try:
             user = User.objects.get(userID=int(user_id))
@@ -64,6 +75,7 @@ class DeleteUserView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class GetUserHistoryView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request, user_id, prompt_id):
         try:
             user = User.objects.get(userID=user_id)
@@ -74,6 +86,7 @@ class GetUserHistoryView(APIView):
             return Response({"message": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
 
 class GetRequestView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request, user_id, operation_id):
         try:
             user = User.objects.get(userID=user_id)
@@ -92,10 +105,8 @@ class CreateUsageView(CreateAPIView):
 ###############
 # Kandinsky api
 
-from rest_framework.response import Response
-from rest_framework import status
-
 class GetModelStatus(APIView):
+    #permission_classes = [IsAuthenticated]
     def get(self, request):
         try:
             AUTH_HEADERS = {
@@ -116,6 +127,7 @@ class GetModelStatus(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CreateImageGenerationRequest(APIView):
+    #permission_classes = [IsAuthenticated]
     def post(self, request):
         try:
             data = request.data  # Получаем JSON-данные из тела запроса
@@ -175,6 +187,7 @@ class CreateImageGenerationRequest(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 class GetGeneratedImage(APIView):
+    #permission_classes = [IsAuthenticated]
     def get(self, request):
         try:
             operation_id = request.query_params.get("operation_id")
@@ -222,12 +235,28 @@ class GetGeneratedImage(APIView):
 
 ###############
 
-
+# получение изображения файлом
 class GetImageView(APIView):
-    def get(self, request, image_id):
+    def get(self, request):
         try:
+            image_id = request.query_params.get("image_id")
             image = ImageModel.objects.get(imageID=image_id)
-            serializer = ImageModelSerializer(image)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            raw_image = image.image_base64
+            
+            # Декодируем base64
+            image_data = base64.b64decode(raw_image)
+            img = Image.open(BytesIO(image_data))
+            
+            # Сохраняем в поток в формате JPG
+            img_io = BytesIO()
+            img.save(img_io, format='JPEG')
+            img_io.seek(0)
+            
+            # Возвращаем файл пользователю
+            response = HttpResponse(img_io, content_type='image/jpeg')
+            response['Content-Disposition'] = f'attachment; filename="{image_id}.jpg"'
+            return response
         except ImageModel.DoesNotExist:
             return Response({"message": "Изображение не найдено"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
