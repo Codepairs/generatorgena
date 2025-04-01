@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from gena_database_app.models import User, ImageModel, UsageHistory
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -24,6 +26,57 @@ class UserSerializer(serializers.ModelSerializer):
             instance.set_password(validated_data.get('password', ''))
         instance.save()
         return instance
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Старый пароль неверен.")
+        return value
+
+    def update(self, instance, validated_data):
+        instance.set_password(validated_data['new_password'])
+        instance.save()
+        return instance
+    
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """Сериализатор для входа по email вместо username"""
+    username_field = 'email'
+    
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token["email"] = user.email  # Добавляем email в токен
+        return token
+
+    def validate(self, attrs):
+        """Изменяем логику валидации, чтобы использовать email вместо username"""
+        email = attrs.get("email")
+        password = attrs.get("password")
+
+        if not email or not password:
+            raise serializers.ValidationError("Email и пароль обязательны.")
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Пользователь с таким email не найден.")
+
+        # этот метод при попыте получения токена выдаёт ошибку
+        if not user.check_password(password):
+            raise serializers.ValidationError("Неверный пароль.")
+
+        # Создаем токен без вызова super()
+        data = {}
+        refresh = self.get_token(user)
+        data["refresh"] = str(refresh)
+        data["access"] = str(refresh.access_token)
+        return data
 
 
 class ImageModelSerializer(serializers.ModelSerializer):

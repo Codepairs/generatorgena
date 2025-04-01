@@ -16,6 +16,7 @@ class User(models.Model):
     def __str__(self):
         return self.userName
 
+
 class ImageModel(models.Model):
     imageID = models.AutoField(primary_key=True)
     image_base64 = models.TextField()
