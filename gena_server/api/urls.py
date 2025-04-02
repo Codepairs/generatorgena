@@ -9,7 +9,8 @@ from .views import GetUserView, RegisterUserView, DeleteUserView, GetRequestView
 
 urlpatterns = [
     #path('users/login/', GetUserView.as_view(), name='token_obtain_pair'),
-    path('users/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    #path('users/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('users/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('users/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('users/register/', RegisterUserView.as_view(), name='register'),
     path('users/<int:user_id>', DeleteUserView.as_view()),

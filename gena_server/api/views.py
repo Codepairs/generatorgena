@@ -44,7 +44,7 @@ class GetUserView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, user_id):
         try:
-            user = User.objects.get(userID=user_id)
+            user = User.objects.get(id=user_id)
             serializer = UserSerializer(user)  # many=False, так как получаем одного пользователя
             return Response(serializer.data, status=status.HTTP_200_OK)
         except User.DoesNotExist:
@@ -54,7 +54,7 @@ class UpdateUserView(APIView):
     permission_classes = [IsAuthenticated]
     def put(self, request, user_id):
         try:
-            user = User.objects.get(userID=int(user_id))
+            user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -68,7 +68,7 @@ class DeleteUserView(APIView):
     permission_classes = [IsAuthenticated]
     def delete(self, request, user_id):
         try:
-            user = User.objects.get(userID=int(user_id))
+            user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -79,7 +79,7 @@ class GetUserHistoryView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, user_id, prompt_id):
         try:
-            user = User.objects.get(userID=user_id)
+            user = User.objects.get(id=user_id)
             history = UsageHistory.objects.filter(userID=user)
             serializer = UsageHistorySerializer(history, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -90,7 +90,7 @@ class GetRequestView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, user_id, operation_id):
         try:
-            user = User.objects.get(userID=user_id)
+            user = User.objects.get(id=user_id)
             history = UsageHistory.objects.filter(userID=user, operationID=operation_id)
             serializer = UsageHistorySerializer(history, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)

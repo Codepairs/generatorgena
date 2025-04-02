@@ -4,28 +4,44 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 
+#class UserSerializer(serializers.ModelSerializer):
+#    class Meta:
+#        model = User
+#        fields = ['userID', 'email', 'password', 'userName']
+#        extra_kwargs = {'password': {'write_only': True}}
+
+#    def create(self, validated_data):
+        # user = User.objects.create(**validated_data)
+#        user = User.objects.create(
+#            email=validated_data.get('email', ''),
+#            userName=validated_data.get('userName', ''),
+#        )
+#        user.set_password(validated_data.get('password', ''))
+#        return user
+
+#    def update(self, instance, validated_data):
+#        instance.email = validated_data.get('email', instance.email)
+#        instance.userName = validated_data.get('userName', instance.userName)
+#        if 'password' in validated_data:
+#            instance.set_password(validated_data.get('password', ''))
+#        instance.save()
+#        return instance
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['userID', 'email', 'password', 'userName']
+        fields = ['id', 'username', 'email', 'password']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        # user = User.objects.create(**validated_data)
-        user = User.objects.create(
-            email=validated_data.get('email', ''),
-            userName=validated_data.get('userName', ''),
-        )
-        user.set_password(validated_data.get('password', ''))
+        user = User.objects.create_user(**validated_data)
         return user
-
+    
     def update(self, instance, validated_data):
-        instance.email = validated_data.get('email', instance.email)
-        instance.userName = validated_data.get('userName', instance.userName)
         if 'password' in validated_data:
-            instance.set_password(validated_data.get('password', ''))
-        instance.save()
-        return instance
+            instance.set_password(validated_data.pop('password'))
+        return super().update(instance, validated_data)
+
 
 
 class ChangePasswordSerializer(serializers.Serializer):
