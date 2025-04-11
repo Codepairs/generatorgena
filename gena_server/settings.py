@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 from dotenv import load_dotenv
+from datetime import timedelta
 import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,9 +27,9 @@ SECRET_KEY = "django-insecure-b57j61-v5r5s6y3%zxfcjn+n=d+)6=^f@im3!kde(x^xydk!l0
 # KEYS FOR KANDINSKY
 KANDINSKY_SECRET_KEY = os.getenv("KANDINSKY_SECRET_KEY")
 KANDINSKY_API_KEY = os.getenv("KANDINSKY_API_KEY")
-
+load_dotenv(BASE_DIR.parent / ".env")
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -44,7 +45,27 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "gena_database_app",
     "gena_server",
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+}
+
+AUTH_USER_MODEL = 'gena_database_app.User'
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

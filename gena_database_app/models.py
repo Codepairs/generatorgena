@@ -1,26 +1,42 @@
 from django.db import models
+from django.contrib.auth.hashers import make_password, check_password
 
-class User(models.Model):
-    userID = models.AutoField(primary_key=True)
+from django.contrib.auth.models import AbstractUser
+
+#class User(models.Model):
+#    userID = models.AutoField(primary_key=True)
+#    email = models.EmailField(unique=True)
+#    password = models.CharField(max_length=128)
+#    userName = models.CharField(max_length=50)
+
+#    def set_password(self, raw_password):
+#        self.password = make_password(raw_password)
+
+#    def check_password(self, raw_password):
+#        return check_password(raw_password, self.password)
+
+#    def __str__(self):
+#        return self.userName
+
+class User(AbstractUser):
+    id = models.AutoField(primary_key=True)
     email = models.EmailField(unique=True)
-    password = models.CharField(max_length=128)
-    userName = models.CharField(max_length=50)
-
+    
     def __str__(self):
         return self.userName
 
+
 class ImageModel(models.Model):
     imageID = models.AutoField(primary_key=True)
-    link_to_image = models.URLField()
+    image_base64 = models.TextField()
     createdAt = models.DateTimeField(auto_now_add=True)
     rating = models.FloatField(default=0.0)
 
     def __str__(self):
-        return f"Image {self.imageID} - {self.link_to_image}"
+        return f"Image {self.imageID} - {self.image_base64}"
 
 class UsageHistory(models.Model):
     operationID = models.AutoField(primary_key=True)
-    uuID = models.TextField() # for kandinsky
     userID = models.ForeignKey(User, on_delete=models.CASCADE)
     imageID = models.ForeignKey(ImageModel, on_delete=models.SET_NULL, null=True)
     prompt = models.TextField()
