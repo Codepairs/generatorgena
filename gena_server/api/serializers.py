@@ -12,12 +12,11 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
-    
+
     def update(self, instance, validated_data):
         if 'password' in validated_data:
             instance.set_password(validated_data.pop('password'))
         return super().update(instance, validated_data)
-
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -77,14 +76,17 @@ class UsageHistorySerializer(serializers.ModelSerializer):
         return instance
     
 
+
 class FusionBrainSerializer(serializers.Serializer):
     def create(self, validated_data):
         client = FusionBrainAPI()
         return client
     
+
 class GenerateSerializer(serializers.Serializer):
     user_id = serializers.IntegerField(required=True)
     prompt = serializers.CharField(required=True)
+    pipeline = serializers.CharField(required=True)
     images = serializers.IntegerField(default=1, required=False)
     width = serializers.IntegerField(default=1024, required=False)
     height = serializers.IntegerField(default=1024, required=False)
