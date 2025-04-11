@@ -11,5 +11,5 @@ urlpatterns = [
     path('requests/', CreateImageGenerationRequest.as_view()),
     path('model/', GetModelStatus.as_view()),
     path('requests/<int:request_id>/', GetRequestView.as_view()),
-    path('images/<int:image_id>/', GetGeneratedImage.as_view()),
+    path('images/', GetGeneratedImage.as_view()),
 ]

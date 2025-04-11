@@ -28,7 +28,7 @@ KANDINSKY_SECRET_KEY = os.getenv("KANDINSKY_SECRET_KEY")
 KANDINSKY_API_KEY = os.getenv("KANDINSKY_API_KEY")
 load_dotenv(BASE_DIR.parent / ".env")
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 

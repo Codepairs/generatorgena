@@ -31,11 +31,11 @@ class Command(BaseCommand):
         
         for i in range(10):
             image = ImageModel.objects.create(
-                link_to_image=fake.uri(),
+                image_base64=fake.text(max_nb_chars=10),
                 rating=random.randint(1, 5)
             )
             images.append(image)
-            self.stdout.write(f'    Создано изображение: {image.link_to_image} с рейтингом {image.rating}')
+            self.stdout.write(f'    Создано изображение: {image.image_base64} с рейтингом {image.rating}')
 
         # создание записей истории использования
         self.stdout.write('Создание истории использования')
