@@ -13,7 +13,7 @@ import requests
 class FusionBrainAPI:
 
     def __init__(self):
-        self.URL = 'https://api-key.fusionbrain.ai/'
+        self.url = 'https://api-key.fusionbrain.ai/'
         self.AUTH_HEADERS = {
             'X-Key': f'Key {settings.KANDINSKY_API_KEY}',
             'X-Secret': f'Secret {settings.KANDINSKY_SECRET_KEY}',

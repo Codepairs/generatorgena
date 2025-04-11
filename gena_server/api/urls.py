@@ -15,7 +15,7 @@ urlpatterns = [
     path('users/<int:user_id>', DeleteUserView.as_view()),
     path('users/<int:user_id>/history/', GetUserHistoryView.as_view()),
     path('users/<int:user_id>/', DeleteUserView.as_view()),
-    path('requests/', GenerateImage.as_view(), name='Generate')
+    path('requests/', GenerateImage.as_view(), name='Generate'),
     #path('requests/', CreateImageGenerationRequest.as_view()),
     #path('model/', GetModelStatus.as_view()),
     path('requests/<int:request_id>/', GetRequestView.as_view()),

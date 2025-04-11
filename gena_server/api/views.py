@@ -124,11 +124,11 @@ class ChangePasswordView(APIView):
         
 class GenerateImage(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self, request):
+    def post(self, request):
         #user_id
         #prompt
         try:
-            serializer = FusionBrainSerializer()
+            serializer = FusionBrainSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             client = serializer.save()
             pipeline_id = client.get_pipeline()
@@ -150,7 +150,7 @@ class GenerateImage(APIView):
 
             history_serializer = UsageHistorySerializer(data=operation_info)
             history_serializer.is_valid(raise_exception=True)
-            history_serializer.save()
+            history_instance = history_serializer.save()
         except requests.exceptions.RequestException:
             return Response({'error': 'Ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
@@ -162,13 +162,15 @@ class GenerateImage(APIView):
             }
             imgae_serializer = ImageModelSerializer(data=image_info)
             imgae_serializer.is_valid(raise_exception=True)
-            instance = serializer.save()
+            image_instance = imgae_serializer.save()
 
-            history_serializer.imageID = instance
-            history_serializer.status = 'generated'
-            history_serializer.save()
+            history_instance.imageID = image_instance
+            history_instance.status = 'generated'
+            history_instance.save()
 
-            return Response(imgae_serializer.data, status=status.HTTP_201_CREATED)
+            response_serializer = UsageHistorySerializer(history_instance)
+
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         except requests.exceptions.RequestException:
             return Response({'error': 'Ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
@@ -179,8 +181,10 @@ class GetImageView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
         try:
-            image_id = request.query_params.get("image_id")
-            image = ImageModel.objects.get(imageID=image_id)
+            operation_id = request.query_params.get("operation_id")
+            user_id = request.query_params.get('user_id')
+            operation = UsageHistory.objects.get(operationID=operation_id, userID = user_id)
+            image = operation.imageID
             raw_image = image.image_base64
             
             # Декодируем base64
@@ -194,7 +198,7 @@ class GetImageView(APIView):
             
             # Возвращаем файл пользователю
             response = HttpResponse(img_io, content_type='image/jpeg')
-            response['Content-Disposition'] = f'attachment; filename="{image_id}.jpg"'
+            response['Content-Disposition'] = f'attachment; filename="{image.imageID}.jpg"'
             return response
         except ImageModel.DoesNotExist:
             return Response({"message": "Изображение не найдено"}, status=status.HTTP_404_NOT_FOUND)
