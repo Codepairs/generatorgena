@@ -5,7 +5,6 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView
 
 from gena_database_app.models import User, UsageHistory, ImageModel
 from .serializers import UserSerializer,  ChangePasswordSerializer, UsageHistorySerializer, ImageModelSerializer, FusionBrainSerializer, \
@@ -14,8 +13,6 @@ from .serializers import UserSerializer,  ChangePasswordSerializer, UsageHistory
 from django.conf import settings
 import logging
 import requests
-import json
-import time
 
 import base64
 from django.http import HttpResponse
@@ -43,8 +40,11 @@ class RegisterUserView(APIView):
 
 class GetUserView(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self, request, user_id):
+    def get(self, request):
         try:
+            user_id = request.query_params.get('user_id')
+            if request.user.id != int(user_id):
+                return Response({"message": "Доступ к данным другого пользователя запрещен"}, status=status.HTTP_403_FORBIDDEN)
             user = User.objects.get(id=user_id)
             serializer = UserSerializer(user)  # many=False, так как получаем одного пользователя
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -53,8 +53,11 @@ class GetUserView(APIView):
 
 class UpdateUserView(APIView):
     permission_classes = [IsAuthenticated]
-    def put(self, request, user_id):
+    def put(self, request):
         try:
+            user_id = request.query_params.get('user_id')
+            if request.user.id != int(user_id):
+                return Response({"message": "Доступ к данным другого пользователя запрещен"}, status=status.HTTP_403_FORBIDDEN)
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -67,8 +70,11 @@ class UpdateUserView(APIView):
 
 class DeleteUserView(APIView):
     permission_classes = [IsAuthenticated]
-    def delete(self, request, user_id):
+    def delete(self, request):
         try:
+            user_id = request.query_params.get('user_id')
+            if request.user.id != int(user_id):
+                return Response({"message": "Доступ к данным другого пользователя запрещен"}, status=status.HTTP_403_FORBIDDEN)
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -78,8 +84,11 @@ class DeleteUserView(APIView):
 
 class GetUserHistoryView(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self, request, user_id, prompt_id):
+    def get(self, request):
         try:
+            user_id = request.query_params.get('user_id')
+            if request.user.id != int(user_id):
+                return Response({"message": "Доступ к данным другого пользователя запрещен"}, status=status.HTTP_403_FORBIDDEN)
             user = User.objects.get(id=user_id)
             history = UsageHistory.objects.filter(userID=user)
             serializer = UsageHistorySerializer(history, many=True)
@@ -89,9 +98,13 @@ class GetUserHistoryView(APIView):
 
 class GetRequestView(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self, request, user_id, operation_id):
+    def get(self, request):
         try:
+            user_id = request.query_params.get('user_id')
+            if request.user.id != int(user_id):
+                return Response({"message": "Доступ к данным другого пользователя запрещен"}, status=status.HTTP_403_FORBIDDEN)
             user = User.objects.get(id=user_id)
+            operation_id = request.data.get("operation_id")
             history = UsageHistory.objects.filter(userID=user, operationID=operation_id)
             serializer = UsageHistorySerializer(history, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -120,6 +133,7 @@ class ChangePasswordView(APIView):
     
 
 ###############
+###############
 # Kandinsky api
         
 class GenerateImage(APIView):
@@ -138,7 +152,10 @@ class GenerateImage(APIView):
         try:
             generate_serializer = GenerateSerializer(data=request.data)
             generate_serializer.is_valid(raise_exception=True)
-            data = generate_serializer.validated_data
+            data = generate_serializer.validated_data   
+
+            if request.user.id != data['user_id']:
+                return Response({"message": "Доступ к данным другого пользователя запрещен"}, status=status.HTTP_403_FORBIDDEN)
 
             uuid = client.generate(prompt=data['prompt'], pipeline=pipeline_id)
 
@@ -182,7 +199,10 @@ class GetImageView(APIView):
     def get(self, request):
         try:
             operation_id = request.query_params.get("operation_id")
-            user_id = request.query_params.get('user_id')
+            user_id = request.query_params.get("user_id")
+
+            if request.user.id != int(user_id):
+                return Response({"message": "Доступ к данным другого пользователя запрещен"}, status=status.HTTP_403_FORBIDDEN)
             operation = UsageHistory.objects.get(operationID=operation_id, userID = user_id)
             image = operation.imageID
             raw_image = image.image_base64

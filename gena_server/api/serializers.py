@@ -86,7 +86,6 @@ class FusionBrainSerializer(serializers.Serializer):
 class GenerateSerializer(serializers.Serializer):
     user_id = serializers.IntegerField(required=True)
     prompt = serializers.CharField(required=True)
-    pipeline = serializers.CharField(required=True)
     images = serializers.IntegerField(default=1, required=False)
     width = serializers.IntegerField(default=1024, required=False)
     height = serializers.IntegerField(default=1024, required=False)
