@@ -98,7 +98,7 @@ class GetUserHistoryView(APIView):
 
 class GetRequestView(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self, request):
+    def get(self, request, request_id):
         try:
             user_id = request.query_params.get('user_id')
             if request.user.id != int(user_id):

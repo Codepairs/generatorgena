@@ -1,0 +1,44 @@
+.MyInput {
+    border-radius: 15px;
+    width: 90%;
+    height: 47px;
+    margin-top: 5%;
+    margin-top: 20px;
+    border: none;
+    outline: none;
+}
+input {
+    font-family: 'Montserrat', 'semi-bold';
+    font-size: 0.75rem;
+    text-indent: 20px;
+}
+
+::-webkit-input-placeholder {
+    /* WebKit/Blink browsers */
+    font-family: 'Montserrat', 'semi-bold';
+    font-size: 0.75rem;
+}
+
+::-moz-placeholder {
+    /* Firefox 19+ */
+    font-family: 'Montserrat', 'semi-bold';
+    font-size: 0.75rem;
+}
+
+:-ms-input-placeholder {
+    /* Internet Explorer 10-11 */
+    font-family: 'Montserrat', 'semi-bold';
+    font-size: 0.75rem;
+}
+
+:-moz-placeholder {
+    /* Mozilla Firefox 4 to 18 */
+    font-family: 'Montserrat', 'semi-bold';
+    font-size: 0.75rem;
+}
+
+::placeholder {
+    font-family: 'Montserrat', 'semi-bold';
+    font-size: 0.75rem;
+
+}

@@ -25,8 +25,8 @@ load_dotenv(BASE_DIR / ".env")  # Загружаем переменные окр
 SECRET_KEY = "django-insecure-b57j61-v5r5s6y3%zxfcjn+n=d+)6=^f@im3!kde(x^xydk!l0"
 
 # KEYS FOR KANDINSKY
-KANDINSKY_SECRET_KEY = os.getenv("KANDINSKY_SECRET_KEY")
-KANDINSKY_API_KEY = os.getenv("KANDINSKY_API_KEY")
+KANDINSKY_SECRET_KEY = "D3817014623AE5637C5BA5C0300E08DB"
+KANDINSKY_API_KEY = "06A3A1C1C6B7E26C84233547A56AA0A3"
 load_dotenv(BASE_DIR.parent / ".env")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "gena_database_app",
+    'corsheaders',
     "gena_server",
     'rest_framework',
     'rest_framework_simplejwt',
@@ -72,11 +73,23 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    'corsheaders.middleware.CorsMiddleware',
    # "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'content-type',
+    'authorization'
+]
+
 
 ROOT_URLCONF = "gena_server.urls"
 

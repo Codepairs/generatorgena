@@ -1,0 +1,10 @@
+.MyButton {
+    font-family: 'Montserrat', 'semi-bold';
+    border-radius: 15px;
+    width: 90%;
+    height: 47px;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    border: none;
+    outline: none;
+}
