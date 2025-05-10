@@ -16,6 +16,18 @@ services:
     ports:
       - "8000:8000"
 
+  frontend:
+    build:
+      context: ./frontend  # путь к директории с фронтендом
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://app:8000  # URL для доступа к бэкенду
+    depends_on:
+      - app
+   # stdin_open: true  # для React hot-reload
+
   db:
     image: postgres:latest
     environment:

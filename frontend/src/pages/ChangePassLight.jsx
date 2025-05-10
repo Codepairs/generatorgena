@@ -1,5 +1,4 @@
-import React, { useContext, useState, Suspense, useEffect } from "react";
-import { AuthContext } from "../context";
+import React, {useState, Suspense } from "react";
 import style from "../styles/Light/Main.module.css";
 import MyButton from "../UI/components/buttons/MyButton";
 import MyInput from "../UI/components/input/MyInput";

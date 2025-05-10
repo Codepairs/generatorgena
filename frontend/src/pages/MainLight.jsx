@@ -18,51 +18,67 @@ const MainLight = () => {
     setRequestData({ ...requestData, prompt });
   };
 
-  // Функция обновления access токена
   const refreshAccessToken = async () => {
     try {
       const refreshToken = localStorage.getItem("refreshToken");
+      console.log("refresh", refreshToken)
       if (!refreshToken) {
         throw new Error("Refresh token not found");
       }
-
-      const response = await fetch(
-        "http://localhost:8000/api/users/refresh/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ refresh: refreshToken }),
-        }
-      );
-
+  
+      const response = await fetch("http://localhost:8000/api/users/refresh/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Если сервер требует Authorization header (например, с accessToken)
+          // Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+        body: JSON.stringify({ refresh: refreshToken }), // или { refresh_token: refreshToken }
+      });
+  
+      // Логирование для отладки
+      console.log("Refresh token response status:", response.status);
+  
       if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Refresh token error details:", errorData);
         throw new Error("Failed to refresh token");
       }
-
+  
       const data = await response.json();
-      const newAccessToken = data.access;
-
-      // Обновляем токен в локальном хранилище и состоянии
-      localStorage.setItem("accessToken", newAccessToken);
-      setAccessToken(newAccessToken);
+      console.log("New tokens data:", data);
+  
+      // Проверка наличия access-токена в ответе
+      if (!data.access) {
+        throw new Error("Access token not found in response");
+      }
+  
+      localStorage.setItem("accessToken", data.access);
+      localStorage.setItem("refreshToken", data.refresh);
+      setAccessToken(data.access);
+      console.log("token", data.access)
+      return data.access; // Возвращаем новый токен для использования
     } catch (err) {
       console.error("Error refreshing token:", err);
-      alert("Ошибка обновления токена. Пожалуйста, войдите снова.");
-      // Здесь можно добавить логику выхода из аккаунта
+      // Дополнительные действия при ошибке:
+      // - Удалить все токены
+      // - Перенаправить на страницу входа
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      setAccessToken(null);
+      window.location.href = "/login";
+      throw err; // Пробросить ошибку дальше, если нужно
     }
   };
   // Запускаем таймер обновления токена при загрузке компонента
   useEffect(() => {
+    //refreshAccessToken();
     // Обновляем токен сразу при загрузке (по желанию)
-    refreshAccessToken();
-
     const intervalId = setInterval(() => {
       refreshAccessToken();
     }, 5 * 60 * 1000); // 5 минут
 
-    return () => clearInterval(intervalId); // Очистка таймера при размонтировании
+    return () => clearInterval(intervalId); 
   }, []);
 
   const handleSubmit = async (event) => {
@@ -71,12 +87,13 @@ const MainLight = () => {
 
     try {
       const userId = getUserIdFromToken();
-      const token = await refreshAccessToken();
+      const token = localStorage.getItem("accessToken");
+      console.log("meow")
+      console.log("TOKEN:  ",token)
       if (!token) {
         throw new Error("JWT token not found in localStorage");
       }
 
-      // Отправляем POST-запрос
       const response = await fetch("http://localhost:8000/api/requests/", {
         method: "POST",
         headers: {
@@ -93,7 +110,6 @@ const MainLight = () => {
         const data = await response.json();
         const operationId = data.operationID;
 
-        // Функция для повторного запроса изображения с задержкой
         const fetchImageWithRetry = async (retries = 5, delay = 2000) => {
           for (let i = 0; i < retries; i++) {
             const imageResponse = await fetch(
@@ -114,15 +130,13 @@ const MainLight = () => {
               // Изображение ещё не готово, ждём и повторяем попытку
               await new Promise((res) => setTimeout(res, delay));
             } else {
-              // Ошибка, прерываем попытки
+
               alert("Ошибка при получении изображения");
               return;
             }
           }
           alert("Изображение не появилось в течение ожидания");
         };
-
-        // Запускаем получение изображения с повторными попытками
         await fetchImageWithRetry();
       } else {
         alert(`Ошибка при отправке запроса: статус ${response.status}`);
@@ -144,7 +158,7 @@ const MainLight = () => {
     // Декодируем токен (предполагаем, что он закодирован в формате base64)
     const payload = token.split(".")[1]; // Берем среднюю часть токена
     const decodedPayload = JSON.parse(atob(payload)); // Декодируем base64 и парсим JSON
-    console.log(decodedPayload);
+    console.log(token);
     return decodedPayload.user_id; // Предполагаем, что ID пользователя хранится в поле userId
   }
 
@@ -229,15 +243,12 @@ const MainLight = () => {
     }
   };
 
-  // Условное форматирование элементов списка истории
   const getItemStyle = (item) => {
-    // Здесь можно добавить логику для определения стиля элемента в зависимости от его свойств
     return {
-      backgroundColor: item.success ? "#e6ffe6" : "#ffe6e6", // Зеленый для успешных, красный для неудачных
-      padding: "10px",
+      backgroundColor: item.success ? "#e6ffe6" : "#ffe6e6", 
       margin: "5px 0",
       borderRadius: "5px",
-      cursor: "pointer", // Добавляем курсор, чтобы показать, что элемент кликабельный
+      cursor: "pointer", 
     };
   };
 
@@ -246,10 +257,10 @@ const MainLight = () => {
       const token = localStorage.getItem("accessToken");
     try {
       const response = await fetch(`http://localhost:8000/api/users/?user_id=${userId}`, {
-        method: 'DELETE', // метод запроса DELETE
+        method: 'DELETE', 
         headers: {
-          'Content-Type': 'application/json', // тип контента
-          'Authorization': `Bearer ${accessToken}` // токен авторизации
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${accessToken}` 
         }
       });
   

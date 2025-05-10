@@ -1,4 +1,4 @@
-import React, { useContext, useState, Suspense, startTranslation } from "react";
+import React, { useContext, useState} from "react";
 import { AuthContext } from "../context";
 import style from "../styles/Light/Registration.module.css"
 import MyButton from "../UI/components/buttons/MyButton";
@@ -73,9 +73,6 @@ const RegLight = () => {
     const { t, i18n } = useTranslation('translation');
     return (
         <div>
-            <Suspense fallback={<div>Loading...</div>}>
-                {startTranslation}
-            </Suspense>
             {/** контейнер страницы */}
             <div className={style.LoginPage}>
                 {/** заголовок*/}

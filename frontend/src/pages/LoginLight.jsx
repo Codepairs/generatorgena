@@ -1,10 +1,8 @@
-import React, { useContext, useState, Suspense, startTranslation } from "react";
+import React, { useContext, useState } from "react";
 import { AuthContext } from "../context";
 import style from "../styles/Light/Login.module.css";
-import Cookies from 'js-cookie';
 import MyButton from "../UI/components/buttons/MyButton";
 import MyInput from "../UI/components/input/MyInput";
-import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
@@ -58,12 +56,10 @@ const LoginLight = () => {
 
             const result = await response.json();
 
-            // Сохраняем access и refresh токены в localStorage
             localStorage.setItem('accessToken', result.access);
             localStorage.setItem('refreshToken', result.refresh);
             handleRedirectToMain();
             console.log(result)
-            //   return result; // Возвращаем результат ответа
         } catch (error) {
             console.error('Error during login:', error);
         }
@@ -93,9 +89,6 @@ const LoginLight = () => {
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     return (
         <div>
-            <Suspense fallback={<div>Loading...</div>}>
-                {startTranslation}
-            </Suspense>
             {/** контейнер страницы */}
             <div className={style.LoginPage}>
                 {/** заголовок*/}
