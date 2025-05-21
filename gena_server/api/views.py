@@ -8,7 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from gena_database_app.models import User, UsageHistory, ImageModel
 from .serializers import UserSerializer,  ChangePasswordSerializer, UsageHistorySerializer, ImageModelSerializer, FusionBrainSerializer, \
-                        GenerateSerializer
+                        GenerateSerializer, GenaSerializer, GenaGenerateSerializer
 
 from django.conf import settings
 import logging
@@ -136,28 +136,85 @@ class ChangePasswordView(APIView):
 ###############
 # Kandinsky api
         
+#class GenerateImage(APIView):
+#    permission_classes = [IsAuthenticated]
+#    def post(self, request):
+#        #user_id
+#        #prompt
+#        try:
+#            serializer = FusionBrainSerializer(data=request.data)
+#            serializer.is_valid(raise_exception=True)
+#            client = serializer.save()
+#            pipeline_id = client.get_pipeline()
+#        except requests.exceptions.RequestException as e:
+#            return Response({'error': 'Ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#        
+#        try:
+#            generate_serializer = GenerateSerializer(data=request.data)
+#            generate_serializer.is_valid(raise_exception=True)
+#            data = generate_serializer.validated_data   
+#
+#            if request.user.id != data['user_id']:
+#                return Response({"message": "Доступ к данным другого пользователя запрещен"}, status=status.HTTP_403_FORBIDDEN)
+#
+#            uuid = client.generate(prompt=data['prompt'], pipeline=pipeline_id)
+#
+#            operation_info = {
+#                'userID': data['user_id'],
+#                'prompt': data['prompt'],
+#                'status': 'created'
+#            }
+#
+#            history_serializer = UsageHistorySerializer(data=operation_info)
+#            history_serializer.is_valid(raise_exception=True)
+#            history_instance = history_serializer.save()
+#        except requests.exceptions.RequestException:
+#            return Response({'error': 'Ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+#        try:
+#            result = client.check_generation(request_id=uuid)
+
+#            image_info = {
+#                'image_base64': result[0]
+#            }
+#            imgae_serializer = ImageModelSerializer(data=image_info)
+#            imgae_serializer.is_valid(raise_exception=True)
+#            image_instance = imgae_serializer.save()
+#
+#           history_instance.imageID = image_instance
+#            history_instance.status = 'generated'
+#            history_instance.save()
+#
+#            response_serializer = UsageHistorySerializer(history_instance)
+#
+#            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+#        except requests.exceptions.RequestException:
+#            return Response({'error': 'Ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+############### GENA
+
 class GenerateImage(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
         #user_id
         #prompt
+        
         try:
-            serializer = FusionBrainSerializer(data=request.data)
+            serializer = GenaSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             client = serializer.save()
-            pipeline_id = client.get_pipeline()
         except requests.exceptions.RequestException as e:
             return Response({'error': 'Ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         try:
-            generate_serializer = GenerateSerializer(data=request.data)
+            generate_serializer = GenaGenerateSerializer(data=request.data)
             generate_serializer.is_valid(raise_exception=True)
             data = generate_serializer.validated_data   
 
             if request.user.id != data['user_id']:
                 return Response({"message": "Доступ к данным другого пользователя запрещен"}, status=status.HTTP_403_FORBIDDEN)
 
-            uuid = client.generate(prompt=data['prompt'], pipeline=pipeline_id)
+            result = client.generate_from_text(prompt=data['prompt'])
 
             operation_info = {
                 'userID': data['user_id'],
@@ -172,8 +229,6 @@ class GenerateImage(APIView):
             return Response({'error': 'Ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         try:
-            result = client.check_generation(request_id=uuid)
-
             image_info = {
                 'image_base64': result[0]
             }
@@ -190,7 +245,9 @@ class GenerateImage(APIView):
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         except requests.exceptions.RequestException:
             return Response({'error': 'Ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
+
+
 ###############
 
 # получение изображения файлом

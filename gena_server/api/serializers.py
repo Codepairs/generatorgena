@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from gena_database_app.models import User, ImageModel, UsageHistory
 from .kandinsky import FusionBrainAPI
+from .gena import Gena
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -81,6 +82,33 @@ class FusionBrainSerializer(serializers.Serializer):
     def create(self, validated_data):
         client = FusionBrainAPI()
         return client
+    
+class GenaSerializer(serializers.Serializer):
+    def create(self, validated_data):
+        model = Gena()
+        return model
+    
+class GenaGenerateSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField(required=True)
+    prompt = serializers.CharField(required=True)
+    images = serializers.IntegerField(default=1, required=False)
+    width = serializers.IntegerField(default=1024, required=False)
+    height = serializers.IntegerField(default=1024, required=False)
+
+    def validate_images(self, value):
+        if value < 1:
+            raise serializers.ValidationError("Количество изображений должно быть не меньше 1.")
+        return value
+
+    def validate_width(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Ширина должна быть положительным числом.")
+        return value
+
+    def validate_height(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Высота должна быть положительным числом.")
+        return value
     
 
 class GenerateSerializer(serializers.Serializer):
