@@ -7,8 +7,8 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from gena_database_app.models import User, UsageHistory, ImageModel
-from .serializers import UserSerializer,  ChangePasswordSerializer, UsageHistorySerializer, ImageModelSerializer, FusionBrainSerializer, \
-                        GenerateSerializer, GenaSerializer, GenaGenerateSerializer
+from .serializers import UserSerializer,  ChangePasswordSerializer, UsageHistorySerializer, ImageModelSerializer, \
+                         GenaGenerateSerializer
 
 from django.conf import settings
 import logging
@@ -199,12 +199,12 @@ class GenerateImage(APIView):
         #user_id
         #prompt
         
-        try:
-            serializer = GenaSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            client = serializer.save()
-        except requests.exceptions.RequestException as e:
-            return Response({'error': 'Ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        #try:
+        #    serializer = GenaSerializer(data=request.data)
+        #    serializer.is_valid(raise_exception=True)
+        #    client = serializer.save()
+        #except requests.exceptions.RequestException as e:
+        #    return Response({'error': 'Ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         try:
             generate_serializer = GenaGenerateSerializer(data=request.data)
@@ -214,7 +214,14 @@ class GenerateImage(APIView):
             if request.user.id != data['user_id']:
                 return Response({"message": "Доступ к данным другого пользователя запрещен"}, status=status.HTTP_403_FORBIDDEN)
 
-            result = client.generate_from_text(prompt=data['prompt'])
+            response = requests.post(
+                "http://ml_service:5000/generate/",
+                json={"prompt": data['prompt']}
+            )
+            if response.status_code != 200:
+                return Response({'error': 'Ошибка генерации'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            result = response.json()["images"]
 
             operation_info = {
                 'userID': data['user_id'],

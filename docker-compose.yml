@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   app:
     build:
@@ -13,20 +15,29 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      ml_service:  # <-- Зависимость от ML-сервиса
+        condition: service_started
     ports:
       - "8000:8000"
 
   frontend:
     build:
-      context: ./frontend  # путь к директории с фронтендом
+      context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:
-      - REACT_APP_API_URL=http://app:8000  # URL для доступа к бэкенду
+      - REACT_APP_API_URL=http://app:8000
     depends_on:
       - app
-   # stdin_open: true  # для React hot-reload
+
+  ml_service:
+    build:
+      context: ./ml_service  # путь к директории с нейросетью
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
 
   db:
     image: postgres:latest
